@@ -1,76 +1,66 @@
 # 🎴 StickerHub
 
-StickerHub es una aplicación web full-stack diseñada para coleccionistas de láminas (stickers, cromos o figuritas). Permite a los usuarios crear álbumes digitales, hacer seguimiento de su colección, identificar láminas faltantes y llevar el conteo exacto de las láminas repetidas.
-
-## 📸 Capturas de Pantalla
-
-*(Reemplaza estas imágenes con tus propias capturas guardándolas en la carpeta `/docs/`)*
-
-### Dashboard y Álbumes
-![Dashboard](./docs/home.png)
-*Vista principal con resumen global de la colección y listado de álbumes.*
-
-### Colección de Láminas (Detalle del Álbum)
-![Detalle de Álbum](./docs/album-detail.png)
-*Cuadrícula interactiva de láminas con efectos visuales para láminas Doradas y Holográficas.*
-
-### Registro / Edición de Lámina
-![Modal de Edición](./docs/modal-sticker.png)
-*Modal para subir fotos reales de la lámina, establecer cantidad de repetidas y tipo de lámina.*
-
-### Carga Masiva y Listados
-![Carga Masiva](./docs/bulk-import.png)
-*Herramienta de carga masiva y exportación rápida de listados para intercambios.*
-
----
+StickerHub es una aplicación web full-stack diseñada para coleccionistas. Permite crear álbumes digitales, hacer un seguimiento de tu colección, identificar láminas faltantes y llevar el conteo exacto de tus láminas repetidas.
 
 ## ✨ Funcionalidades Principales
 
-- **Gestión de Álbumes:** Crea múltiples álbumes con portada y metadata (fecha de lanzamiento, temática).
+- **Gestión de Álbumes:** Crea álbumes personalizados con metadata (portada, temática, fecha de lanzamiento).
+- **Dashboard Global:** Resumen en tiempo real del progreso de tu colección, total de láminas, obtenidas, faltantes y repetidas.
 - **Control Detallado de Láminas:**
-  - Registro de estado: *Tengo* (con conteo de duplicadas) o *Me Falta*.
-  - Tipos especiales: Láminas Normales, Doradas (brillo estático dorado) y Holográficas (animación iridiscente).
-  - Subida de fotografías locales por cada lámina.
-- **Importación Masiva (Bulk):** Agrega decenas de láminas a la vez pegando listas separadas por comas o saltos de línea.
-- **Listados de Intercambio:** Generación automática de listas de "Faltantes" y "Repetidas" listas para copiar al portapapeles.
-- **Resumen Estadístico:** Panel de progreso en tiempo real con porcentajes de completado general y por álbum.
+  - Registra el estado exacto: _Tengo_ (con contador interactivo de duplicadas) o _Faltante_.
+  - **Tipos y Efectos Visuales CSS:**
+    - ✨ _Doradas:_ Brillo estático y resplandor amarillo.
+    - 🌟 _Holográficas:_ Animación iridiscente continua sobre la carta.
+    - ⚪ _Faltantes:_ Escala de grises con opacidad reducida.
+  - Sube fotos reales de tus láminas a nivel local.
+- **Carga Masiva (Bulk Import):** Importa decenas de láminas al mismo tiempo pegando listas de números, acelerando la creación inicial.
+- **Exportación de Listados:** Genera instantáneamente textos limpios de tus "Faltantes" y "Repetidas" listos para copiar y compartir en intercambios.
 
 ## 🛠️ Stack Tecnológico
 
-- **Frontend:** Next.js 16 (App Router), React, Tailwind CSS (Custom Design System).
+- **Frontend:** Next.js 16 (App Router), React, Tailwind CSS (Custom Design System inspirado en estilo "pastel/Panini").
 - **Backend:** Next.js Route Handlers (API REST).
 - **Base de Datos:** MySQL 8.
 - **ORM:** Prisma.
-- **Infraestructura:** Docker & Docker Compose.
+- **Infraestructura:** Docker y Docker Compose.
 
 ---
 
-## 🚀 Instalación y Uso (Docker)
+## 🚀 Instalación y Uso (Con Docker)
 
-Todo el entorno (Base de Datos + Aplicación Web) está 100% contenerizado. No necesitas instalar Node.js ni MySQL en tu máquina, solo **Docker**.
+El proyecto está 100% contenerizado. Solo necesitas tener **Docker** instalado en tu computadora.
 
 ### 1. Clonar el repositorio
+
 ```bash
-git clone https://github.com/tu-usuario/stickerhub.git
-cd stickerhub
+git clone https://github.com/francoramirezdev/ex_StickerHub
+cd ex_StickerHub
 ```
 
 ### 2. Levantar la aplicación
-Ejecuta el siguiente comando para construir la imagen e iniciar los contenedores:
+
+Ejecuta el siguiente comando para construir el proyecto e iniciar la base de datos:
+
 ```bash
 docker compose up -d --build
 ```
-*Este comando descargará MySQL, instalará las dependencias de Node, ejecutará las migraciones de base de datos automáticamente e iniciará el servidor en modo desarrollo (con hot-reload).*
 
-### 3. Acceder a la Web
+_Este comando instalará las dependencias, ejecutará las migraciones de Prisma automáticamente en la BD MySQL e iniciará el servidor de desarrollo de Next.js (hot-reload habilitado)._
+
+### 3. Usar la aplicación
+
 Abre tu navegador en:
 👉 **http://localhost:3000**
 
+_(Para detener el proyecto, ejecuta `docker compose down`)_
+
 ---
 
-## 📚 Documentación de API (OpenAPI / Swagger)
+## 📚 Documentación de API (Swagger)
 
-La API cuenta con documentación oficial de OpenAPI.
+El proyecto incluye documentación estática generada con **OpenAPI 3.0**.
 
-- Puedes acceder a la interfaz gráfica interactiva visitando: `http://localhost:3000/api-docs` (⚠️ *Solo disponible en modo desarrollo local*).
-- El archivo crudo se encuentra en `docs/openapi.yaml` (ideal para importar directamente en **Postman** y realizar pruebas).
+1. Abre la ruta oculta para desarrolladores en tu navegador:
+   👉 `http://localhost:3000/api-docs`
+   _(Nota: Por seguridad de la aplicación, esta ruta está bloqueada en producción mediante Middleware y solo funciona en entorno de desarrollo local)._
+2. El archivo base se encuentra en `docs/openapi.yaml`, el cual puedes importar en **Postman** o **Swagger Editor** para realizar pruebas automatizadas.
