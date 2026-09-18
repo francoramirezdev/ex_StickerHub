@@ -1,53 +1,59 @@
 import { NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 import { writeFile } from 'fs/promises'
 import path from 'path'
 import { prisma } from '@/lib/prisma'
+import { StickerUpsertSchema } from '@/lib/schemas'
 
-// POST /api/stickers — upsert (con soporte para imagen form-data)
 export async function POST(req: Request) {
-  const formData = await req.formData()
-  
-  const albumId = Number(formData.get('albumId'))
-  const number = formData.get('number') as string
-  const name = formData.get('name') as string | null
-  const stickerType = formData.get('stickerType') as string | null
-  const isOwned = formData.get('isOwned') === 'true'
-  const duplicateCount = Number(formData.get('duplicateCount') || 0)
-  const isDuplicate = duplicateCount > 0
+  try {
+    const formData = await req.formData()
 
-  let image: string | undefined = undefined
+    const parsed = StickerUpsertSchema.parse({
+      albumId:        formData.get('albumId'),
+      number:         formData.get('number'),
+      isOwned:        formData.get('isOwned'),
+      duplicateCount: formData.get('duplicateCount') || 0,
+      stickerType:    formData.get('stickerType') || 'Normal',
+      name:           formData.get('name') || undefined,
+    })
 
-  const file = formData.get('image') as File | null
-  if (file && file.size > 0) {
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    const ext = file.name.split('.').pop() ?? 'jpg'
-    const filename = `sticker-${albumId}-${number}-${Date.now()}.${ext}`
-    const filepath = path.join(process.cwd(), 'public', 'uploads', 'stickers', filename)
-    await writeFile(filepath, buffer)
-    image = `/uploads/stickers/${filename}`
+    const isDuplicate = parsed.duplicateCount > 0
+
+    let image: string | undefined
+    const file = formData.get('image') as File | null
+    if (file && file.size > 0) {
+      const bytes = await file.arrayBuffer()
+      const ext = file.name.split('.').pop() ?? 'jpg'
+      const filename = `sticker-${parsed.albumId}-${parsed.number}-${Date.now()}.${ext}`
+      await writeFile(path.join(process.cwd(), 'public', 'uploads', 'stickers', filename), Buffer.from(bytes))
+      image = `/uploads/stickers/${filename}`
+    }
+
+    const sticker = await prisma.sticker.upsert({
+      where: { albumId_number: { albumId: parsed.albumId, number: parsed.number } },
+      update: {
+        isOwned: parsed.isOwned,
+        isDuplicate: parsed.isOwned ? isDuplicate : false,
+        duplicateCount: parsed.isOwned ? parsed.duplicateCount : 0,
+        name: parsed.name,
+        stickerType: parsed.stickerType,
+        ...(image ? { image } : {}),
+      },
+      create: {
+        albumId:        parsed.albumId,
+        number:         parsed.number,
+        name:           parsed.name,
+        stickerType:    parsed.stickerType,
+        isOwned:        parsed.isOwned,
+        isDuplicate:    parsed.isOwned ? isDuplicate : false,
+        duplicateCount: parsed.isOwned ? parsed.duplicateCount : 0,
+        image,
+      },
+    })
+    return NextResponse.json(sticker)
+  } catch (e) {
+    if (e instanceof ZodError) return NextResponse.json({ errors: e.flatten().fieldErrors }, { status: 400 })
+    throw e
   }
-
-  const sticker = await prisma.sticker.upsert({
-    where: { albumId_number: { albumId, number } },
-    update: { 
-      isOwned, 
-      isDuplicate: isOwned ? isDuplicate : false, 
-      duplicateCount: isOwned ? duplicateCount : 0,
-      name: name || undefined, 
-      stickerType: stickerType || undefined,
-      ...(image ? { image } : {})
-    },
-    create: { 
-      albumId, 
-      number, 
-      name, 
-      stickerType: stickerType || 'Normal', 
-      isOwned, 
-      isDuplicate: isOwned ? isDuplicate : false,
-      duplicateCount: isOwned ? duplicateCount : 0,
-      image
-    },
-  })
-  return NextResponse.json(sticker)
 }

@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 import { writeFile } from 'fs/promises'
 import path from 'path'
 import { prisma } from '@/lib/prisma'
+import { AlbumCreateSchema } from '@/lib/schemas'
 
 export async function GET() {
   const albums = await prisma.album.findMany({
@@ -12,36 +14,37 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const formData = await req.formData()
-  
-  const title = formData.get('title') as string
-  const description = formData.get('description') as string | null
-  const releaseDate = formData.get('releaseDate') as string | null
-  const category = formData.get('category') as string | null
-  const totalStickers = formData.get('totalStickers') as string | null
-  
-  let coverImage: string | undefined = undefined
+  try {
+    const formData = await req.formData()
 
-  const file = formData.get('coverImage') as File | null
-  if (file && file.size > 0) {
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    const ext = file.name.split('.').pop() ?? 'jpg'
-    const filename = `album-${Date.now()}.${ext}`
-    const filepath = path.join(process.cwd(), 'public', 'uploads', 'albums', filename)
-    await writeFile(filepath, buffer)
-    coverImage = `/uploads/albums/${filename}`
+    const parsed = AlbumCreateSchema.parse({
+      title:         formData.get('title'),
+      description:   formData.get('description') || undefined,
+      releaseDate:   formData.get('releaseDate') || undefined,
+      category:      formData.get('category') || undefined,
+      totalStickers: formData.get('totalStickers') || undefined,
+    })
+
+    let coverImage: string | undefined
+    const file = formData.get('coverImage') as File | null
+    if (file && file.size > 0) {
+      const bytes = await file.arrayBuffer()
+      const ext = file.name.split('.').pop() ?? 'jpg'
+      const filename = `album-${Date.now()}.${ext}`
+      await writeFile(path.join(process.cwd(), 'public', 'uploads', 'albums', filename), Buffer.from(bytes))
+      coverImage = `/uploads/albums/${filename}`
+    }
+
+    const album = await prisma.album.create({
+      data: {
+        ...parsed,
+        coverImage,
+        releaseDate: parsed.releaseDate ? new Date(parsed.releaseDate) : undefined,
+      },
+    })
+    return NextResponse.json(album, { status: 201 })
+  } catch (e) {
+    if (e instanceof ZodError) return NextResponse.json({ errors: e.flatten().fieldErrors }, { status: 400 })
+    throw e
   }
-
-  const album = await prisma.album.create({
-    data: {
-      title,
-      description,
-      coverImage,
-      releaseDate: releaseDate ? new Date(releaseDate) : undefined,
-      category,
-      totalStickers: totalStickers ? Number(totalStickers) : undefined,
-    },
-  })
-  return NextResponse.json(album, { status: 201 })
 }

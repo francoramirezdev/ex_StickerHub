@@ -1,33 +1,32 @@
 import { NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { BulkStickerSchema } from '@/lib/schemas'
 
 export async function POST(req: Request) {
-  const { albumId, numbers, isOwned } = await req.json()
+  try {
+    const body = await req.json()
+    const { albumId, numbers, isOwned } = BulkStickerSchema.parse(body)
 
-  if (!albumId || !Array.isArray(numbers) || numbers.length === 0)
-    return NextResponse.json({ error: 'albumId y numbers requeridos' }, { status: 400 })
+    await prisma.sticker.createMany({
+      data: numbers.map((n: string) => ({
+        albumId, number: n, isOwned, isDuplicate: false, duplicateCount: 0,
+      })),
+      skipDuplicates: true,
+    })
 
-  // Crear los que no existen, saltar duplicados
-  await prisma.sticker.createMany({
-    data: numbers.map((n: string) => ({
-      albumId: Number(albumId),
-      number: n,
-      isOwned,
-      isDuplicate: false,
-      duplicateCount: 0,
-    })),
-    skipDuplicates: true,
-  })
+    await prisma.sticker.updateMany({
+      where: { albumId, number: { in: numbers } },
+      data: { isOwned },
+    })
 
-  // Actualizar el estado de todos (incluyendo los ya existentes)
-  await prisma.sticker.updateMany({
-    where: { albumId: Number(albumId), number: { in: numbers } },
-    data: { isOwned },
-  })
+    const updated = await prisma.sticker.findMany({
+      where: { albumId, number: { in: numbers } },
+    })
 
-  const updated = await prisma.sticker.findMany({
-    where: { albumId: Number(albumId), number: { in: numbers } },
-  })
-
-  return NextResponse.json({ count: updated.length, stickers: updated })
+    return NextResponse.json({ count: updated.length, stickers: updated })
+  } catch (e) {
+    if (e instanceof ZodError) return NextResponse.json({ errors: e.flatten().fieldErrors }, { status: 400 })
+    throw e
+  }
 }
