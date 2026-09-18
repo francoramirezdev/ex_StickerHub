@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Album {
+  id            Int       @id @default(autoincrement())
+  title         String
+  description   String?   @db.Text
+  coverImage    String?
+  releaseDate   DateTime?
+  category      String?   // Deportivo, Anime, Arte, etc.
+  totalStickers Int?      // total esperado de láminas
+  stickers      Sticker[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Sticker {
+  id             Int      @id @default(autoincrement())
+  number         String
+  name           String?              // nombre descriptivo de la lámina
+  image          String?              // ruta de la foto opcional
+  stickerType    String?  @default("Normal") // Normal, Brillante, Especial, Dorada
+  albumId        Int
+  album          Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  isOwned        Boolean  @default(false)
+  isDuplicate    Boolean  @default(false)
+  duplicateCount Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([albumId, number])
+}

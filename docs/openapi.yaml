@@ -1,0 +1,293 @@
+openapi: 3.0.0
+info:
+  title: StickerHub API
+  version: 1.0.0
+  description: API REST para gestión de álbumes y láminas.
+servers:
+  - url: http://localhost:3000/api
+    description: Servidor de desarrollo local
+
+components:
+  schemas:
+    Album:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        coverImage:
+          type: string
+          nullable: true
+        releaseDate:
+          type: string
+          format: date-time
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        totalStickers:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    Sticker:
+      type: object
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+        name:
+          type: string
+          nullable: true
+        image:
+          type: string
+          nullable: true
+        stickerType:
+          type: string
+        albumId:
+          type: integer
+        isOwned:
+          type: boolean
+        isDuplicate:
+          type: boolean
+        duplicateCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+paths:
+  /albums:
+    get:
+      summary: Listar álbumes
+      responses:
+        '200':
+          description: Lista de todos los álbumes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Album'
+    post:
+      summary: Crear álbum
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                coverImage:
+                  type: string
+                  format: binary
+                releaseDate:
+                  type: string
+                  format: date
+                category:
+                  type: string
+                totalStickers:
+                  type: integer
+              required:
+                - title
+      responses:
+        '201':
+          description: Álbum creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Album'
+
+  /albums/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Obtener álbum
+      responses:
+        '200':
+          description: Detalle del álbum con láminas
+        '404':
+          description: Álbum no encontrado
+    put:
+      summary: Actualizar álbum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                coverImage:
+                  type: string
+                releaseDate:
+                  type: string
+                  format: date
+                category:
+                  type: string
+                totalStickers:
+                  type: integer
+      responses:
+        '200':
+          description: Álbum actualizado
+    delete:
+      summary: Eliminar álbum
+      responses:
+        '200':
+          description: Álbum eliminado
+
+  /stickers:
+    post:
+      summary: Upsert de lámina
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                albumId:
+                  type: integer
+                number:
+                  type: string
+                isOwned:
+                  type: boolean
+                duplicateCount:
+                  type: integer
+                stickerType:
+                  type: string
+                name:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+              required:
+                - albumId
+                - number
+                - isOwned
+      responses:
+        '200':
+          description: Lámina guardada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sticker'
+
+  /stickers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Obtener lámina
+      responses:
+        '200':
+          description: Detalle de lámina
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sticker'
+    put:
+      summary: Editar lámina
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                number:
+                  type: string
+                isOwned:
+                  type: boolean
+                duplicateCount:
+                  type: integer
+                stickerType:
+                  type: string
+                name:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+              required:
+                - number
+                - isOwned
+      responses:
+        '200':
+          description: Lámina actualizada
+    delete:
+      summary: Eliminar lámina
+      responses:
+        '200':
+          description: Lámina eliminada
+
+  /stickers/{id}/image:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      summary: Subir foto de lámina
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+              required:
+                - image
+      responses:
+        '200':
+          description: Foto actualizada
+
+  /stickers/bulk:
+    post:
+      summary: Carga masiva de láminas
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                albumId:
+                  type: integer
+                numbers:
+                  type: array
+                  items:
+                    type: string
+                isOwned:
+                  type: boolean
+              required:
+                - albumId
+                - numbers
+                - isOwned
+      responses:
+        '200':
+          description: Carga procesada
