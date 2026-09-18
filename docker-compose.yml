@@ -10,21 +10,6 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: stickerhub_app
-    ports:
-      - "3000:3000"
-    environment:
-      # Conexión interna usando el nombre del contenedor "db" en lugar de "localhost"
-      - DATABASE_URL=mysql://root:root@db:3306/stickerhub
-    volumes:
-      - .:/app
-      - /app/node_modules # Evita que los node_modules de tu Mac/PC pisen los del contenedor Linux
-    depends_on:
-      - db
 
 volumes:
   mysql_data:

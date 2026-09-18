@@ -30,22 +30,19 @@ StickerHub es una aplicación web full-stack diseñada para coleccionistas. Perm
 
 El proyecto está 100% contenerizado. Solo necesitas tener **Docker** instalado en tu computadora.
 
-### 1. Clonar el repositorio
-
+### 1. Levantar la Base de Datos
+Asegúrate de tener Docker instalado e inicia el contenedor de MySQL:
 ```bash
-git clone https://github.com/francoramirezdev/ex_StickerHub
-cd ex_StickerHub
+docker compose up -d
 ```
 
-### 2. Levantar la aplicación
-
-Ejecuta el siguiente comando para construir el proyecto e iniciar la base de datos:
-
+### 2. Instalar y Levantar la Aplicación
+En tu terminal, sincroniza la base de datos e inicia el servidor de desarrollo local:
 ```bash
-docker compose up -d --build
+npm install
+npx prisma db push
+npm run dev
 ```
-
-_Este comando instalará las dependencias, ejecutará las migraciones de Prisma automáticamente en la BD MySQL e iniciará el servidor de desarrollo de Next.js (hot-reload habilitado)._
 
 ### 3. Usar la aplicación
 

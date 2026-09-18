@@ -327,7 +327,7 @@ export default function AlbumView({ params }: { params: Promise<{ id: string }> 
 
         <button className="btn-add" onClick={openModalForNew}>+ AÑADIR NUEVA LÁMINA</button>
         <button className="btn-add" onClick={() => setIsBulkOpen(true)} style={{ background: 'var(--teal)', marginTop: '0.5rem' }}>
-          📋 CARGA MASIVA
+          + CARGA MASIVA
         </button>
       </aside>
 
